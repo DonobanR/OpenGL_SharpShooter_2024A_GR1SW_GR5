@@ -35,7 +35,11 @@ void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& fi
 void drawLamp1(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp1);
 void drawLamp2(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp2);
 
+void shootRayFromCamera(Camera& camera, Model& target, glm::mat4& targetModelMatrix);
+bool intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t);
 bool intersectsTargetRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const Model& model);
+void checkRayIntersection(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, glm::mat4& targetModelMatrix, const Model& target);
+void repositionTarget(glm::mat4& modelMatrix, const glm::vec3& currentPosition);
 
 // Settings FHD
 const unsigned int SCR_WIDTH = 1920;
@@ -315,6 +319,10 @@ int main()
             }
         }
 
+        // Verificar la acción de disparo
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            shootRayFromCamera(camera, blanco, targetModelMatrix);
+        }
         ourShader.setMat4("model", targetModelMatrix);
         blanco.Draw(ourShader);
 
@@ -387,8 +395,55 @@ void processInput(GLFWwindow* window) {
         showM4 = false;
         showBayonet = true;
     }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        glm::mat4 targetModelMatrix;
+        shootRayFromCamera(camera, blanco, targetModelMatrix);
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && !isShooting) {
+        isShooting = true; // Establece el estado de disparo a verdadero
+        shootTime = 0.0f; // Reinicia el contador de tiempo de disparo
+
+        // El resto de la lógica de disparo permanece igual
+        glm::mat4 targetModelMatrix;
+        shootRayFromCamera(camera, blanco, targetModelMatrix);
+    }
 }
 
+void shootRayFromCamera(Camera& camera, Model& target, glm::mat4& targetModelMatrix) {
+    glm::vec3 rayOrigin = camera.Position;
+    glm::vec3 rayDirection = camera.Front;
+    checkRayIntersection(rayOrigin, rayDirection, targetModelMatrix, target);
+}
+
+
+bool intersectRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDir, const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, float& t) {
+    const float EPSILON = 0.0000001f;
+    glm::vec3 edge1, edge2, h, s, q;
+    float a, f, u, v;
+    edge1 = v1 - v0;
+    edge2 = v2 - v0;
+    h = glm::cross(rayDir, edge2);
+    a = glm::dot(edge1, h);
+    if (a > -EPSILON && a < EPSILON)
+        return false;    // El rayo es paralelo al triángulo.
+    f = 1.0 / a;
+    s = rayOrigin - v0;
+    u = f * glm::dot(s, h);
+    if (u < 0.0 || u > 1.0)
+        return false;
+    q = glm::cross(s, edge1);
+    v = f * glm::dot(rayDir, q);
+    if (v < 0.0 || u + v > 1.0)
+        return false;
+    // En este punto sabemos que hay una intersección en la línea del rayo, pero no si el rayo realmente la intersecta.
+    t = f * glm::dot(edge2, q);
+    if (t > EPSILON) // Intersección con el rayo
+        return true;
+
+    return false;
+}
 
 bool intersectsTargetRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const Model& model, const glm::mat4& modelMatrix) {
     for (const Mesh& mesh : model.meshes) {
@@ -398,11 +453,53 @@ bool intersectsTargetRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& ra
             glm::vec3 v2 = glm::vec3(modelMatrix * glm::vec4(mesh.vertices[mesh.indices[i + 2]].Position, 1.0));
 
             float t = 0.0f;
+            if (intersectRayTriangle(rayOrigin, rayDirection, v0, v1, v2, t)) {
+                return true; // Colisiona
+            }
         }
     }
     return false; // No colisiona
 }
 
+void checkRayIntersection(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, glm::mat4& targetModelMatrix, const Model& target) {
+    if (intersectsTargetRayTriangle(rayOrigin, rayDirection, target, targetModelMatrix)) {
+        // Extracción de la posición actual del modelo
+        glm::vec3 currentPosition = glm::vec3(targetModelMatrix[3][0], targetModelMatrix[3][1], targetModelMatrix[3][2]);
+
+
+        // Llamar a repositionTarget con la matriz del modelo y la posición actual
+        repositionTarget(targetModelMatrix, currentPosition);
+    }
+}
+
+
+//cambio de posicion de mi blanco en cada disparo
+void repositionTarget(glm::mat4& modelMatrix, const glm::vec3& currentPosition) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> disX(-100.0, 180.0); // Límite en el eje X
+    std::uniform_real_distribution<> disY(50.0, 80.0);  // Límite en el eje Y
+    std::uniform_real_distribution<> disZ(-300.0, 600.0); // Desplazamiento en el eje Z
+
+    // Generar nueva posición dentro de los límites específicos
+    float newZ = currentPosition.z + disZ(gen);
+    glm::vec3 newPosition = glm::vec3(disX(gen), disY(gen), currentPosition.z + disZ(gen));
+
+    // Asegurar que el valor de Z no exceda los límites globales
+    float zMinGlobal = -100.0f;
+    float zMaxGlobal = 400.0f;
+
+    newPosition.z = glm::clamp(newPosition.z, zMinGlobal, zMaxGlobal);
+
+    // Restablecer la matriz del modelo para aplicar la nueva posición
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::translate(modelMatrix, newPosition);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f));
+
+    // Cambiar la orientación y escala del target
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+}
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
