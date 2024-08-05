@@ -23,12 +23,17 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 
 unsigned int loadTexture(const char* path);
-
+void drawM4(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& m4);
+void drawDeagle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& deagle);
+void drawBayonet(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& bayonet);
+void drawReticle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& reticle2d);
+void drawLogo(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& logo);
+void drawSkybox(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& skybox);
+void drawShootDeagle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& shootD);
+void drawShootM4(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& shootM);
 void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& field);
-
-
-
-
+void drawLamp1(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp1);
+void drawLamp2(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp2);
 
 // Settings FHD
 const unsigned int SCR_WIDTH = 1920;
@@ -77,7 +82,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef __APPLE__
+#ifdef APPLE
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
@@ -149,9 +154,18 @@ int main()
     //unsigned int texture2 = loadTexture("textures/container2_specular.png");
 
     // load models
-
+    Model pistola1("model/deagle/deagle.gltf");
+    Model pistolaM4("model/m4/m4.gltf");
+    Model cielo("model/skybox/skybox.gltf");
+    Model blanco("model/blanco/scene.gltf");
+    Model blanco2("model/blanco2/scene.gltf");
+    Model logo("model/logo/logo.gltf");
+    Model cuchillo("model/bayonet/scene.gltf");
+    Model mirilla("model/mira4/miragreen.gltf");
+    Model animacionDisparo("model/shoot/shootD.gltf");
+    Model animacionDisparo2("model/shoot/shootM.gltf");
     Model escenario("model/escenario2/scene.gltf");
-
+    Model lamp("model/lamp/lamp.gltf");
     blanco = Model("model/blanco/scene.gltf");
 
     targetModelMatrix = glm::mat4(1.0f);
@@ -199,10 +213,63 @@ int main()
         textureShader.setMat4("projection", glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1500.0f));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+        ourShader.use();
+        // Se activa activar el shader para configurar las variables uniformes/dibujar objetos
+        ourShader.setVec3("viewPos", camera.Position);
+        ourShader.setFloat("material.shininess", 100.0f);
 
 
+        // Luz direccional para el sol
+        ourShader.setVec3("dirLight.direction", -0.2f, -1.0f, -0.3f);
+        ourShader.setVec3("dirLight.ambient", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("dirLight.diffuse", 0.4f, 0.4f, 0.4f);
+        ourShader.setVec3("dirLight.specular", 0.5f, 0.5f, 0.5f);
+
+        // Punto de luz [LÁMPARA 1] izquierda
+        ourShader.setVec3("pointLights[0].position", posLamp1.x + 0.5f, -(posLamp1.y) + 1.0f, posLamp1.z + 4.0f);
+        ourShader.setVec3("pointLights[0].ambient", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[0].diffuse", 1.0f, 0.82f, 0.0f); //cambio de color
+        ourShader.setVec3("pointLights[0].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[0].constant", 1.0f);
+        ourShader.setFloat("pointLights[0].linear", 0.05); //distancia luz-fragmento
+        ourShader.setFloat("pointLights[0].quadratic", 0.00000000001); //atenuación con la distancia
+
+        // Punto de luz [LÁMPARA 2] derecha
+        ourShader.setVec3("pointLights[1].position", posLamp2.x + 0.5f, -(posLamp2.y) + 1.0f, posLamp1.z + 4.0f);
+        ourShader.setVec3("pointLights[1].ambient", 0.8f, 0.8f, 0.8f);
+        ourShader.setVec3("pointLights[1].diffuse", 1.0f, 0.82f, 0.0f);
+        ourShader.setVec3("pointLights[1].specular", 1.0f, 1.0f, 1.0f);
+        ourShader.setFloat("pointLights[1].constant", 1.0f);
+        ourShader.setFloat("pointLights[1].linear", 0.05);
+        ourShader.setFloat("pointLights[1].quadratic", 0.00000000001);
+
+        // view / projection / transformations
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 1500.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+
+        // Target
         ourShader.setMat4("model", targetModelMatrix);
         blanco.Draw(ourShader);
+
+        // Sbybox
+        drawSkybox(ourShader, view, projection, cielo);
+
+        // Mira
+        drawReticle(ourShader, view, projection, mirilla);
+
+        // Logo
+        //drawLogo(ourShader, view, projection, logo);
+
+        // Field
+        drawField(ourShader, view, projection, escenario);
+
+        // Lampara 1
+        drawLamp1(ourShader, view, projection, lamp);
+
+        // Lampara 2
+        drawLamp2(ourShader, view, projection, lamp);
 
         // render container
         glBindVertexArray(VAO);
@@ -221,9 +288,6 @@ int main()
     glfwTerminate();
     return 0;
 }
-
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -297,6 +361,89 @@ unsigned int loadTexture(char const* path)
 
 
 
+// Dibujar Deagle
+void drawDeagle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& deagle) {
+    glm::mat4 pistolaMatrix = glm::mat4(1.0f);
+    pistolaMatrix = glm::translate(pistolaMatrix, glm::vec3(0.21f, -0.4f, -0.38f));
+    pistolaMatrix = glm::rotate(pistolaMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    pistolaMatrix = glm::rotate(pistolaMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    pistolaMatrix = glm::scale(pistolaMatrix, glm::vec3(0.06f));
+    pistolaMatrix = glm::inverse(view) * pistolaMatrix;
+    shader.setMat4("model", pistolaMatrix);
+    deagle.Draw(shader);
+}
+
+// Dibujar M4
+void drawM4(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& m4) {
+    glm::mat4 armaMatrix = glm::mat4(1.0f);
+    armaMatrix = glm::translate(armaMatrix, glm::vec3(0.28f, -0.7f, -0.1f));
+    armaMatrix = glm::rotate(armaMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    armaMatrix = glm::scale(armaMatrix, glm::vec3(0.04f));
+    armaMatrix = glm::inverse(view) * armaMatrix;
+    shader.setMat4("model", armaMatrix);
+    m4.Draw(shader);
+}
+
+// Dibujar Bayonet
+void drawBayonet(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& bayonet) {
+    glm::mat4 cuchilloMatrix = glm::mat4(1.0f);
+    cuchilloMatrix = glm::translate(cuchilloMatrix, glm::vec3(0.5f, -1.0f, -1.0f));
+    cuchilloMatrix = glm::rotate(cuchilloMatrix, glm::radians(1.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    cuchilloMatrix = glm::rotate(cuchilloMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    cuchilloMatrix = glm::rotate(cuchilloMatrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    cuchilloMatrix = glm::scale(cuchilloMatrix, glm::vec3(0.14f));
+    cuchilloMatrix = glm::inverse(view) * cuchilloMatrix;
+    shader.setMat4("model", cuchilloMatrix);
+    bayonet.Draw(shader);
+}
+// Dibujar Skybox
+void drawSkybox(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& skybox) {
+    glm::mat4 skyboxMatrix = glm::mat4(1.0f);
+    skyboxMatrix = glm::translate(skyboxMatrix, glm::vec3(1.0f, 0.0f, 1.0f));
+    skyboxMatrix = glm::rotate(skyboxMatrix, glm::radians(135.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    skyboxMatrix = glm::rotate(skyboxMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    skyboxMatrix = glm::scale(skyboxMatrix, glm::vec3(800.0f));
+    shader.setMat4("model", skyboxMatrix);
+    skybox.Draw(shader);
+}
+
+// Dibujar Disparo Deagle
+void drawShootDeagle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& shootDeagle) {
+    glm::mat4 shootDeagleMatrix = glm::mat4(1.0f);
+    shootDeagleMatrix = glm::translate(shootDeagleMatrix, glm::vec3(0.32f, -0.22f, -1.50f));
+    shootDeagleMatrix = glm::rotate(shootDeagleMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    shootDeagleMatrix = glm::rotate(shootDeagleMatrix, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    shootDeagleMatrix = glm::scale(shootDeagleMatrix, glm::vec3(0.001f));
+    shootDeagleMatrix = glm::inverse(view) * shootDeagleMatrix;
+    shader.setMat4("model", shootDeagleMatrix);
+    shootDeagle.Draw(shader);
+}
+
+// Dibujar Disparo M4
+void drawShootM4(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& shootM4) {
+    glm::mat4 shootM4Matrix = glm::mat4(1.0f);
+    shootM4Matrix = glm::translate(shootM4Matrix, glm::vec3(0.27f, -0.20f, -1.65f));
+    shootM4Matrix = glm::rotate(shootM4Matrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    shootM4Matrix = glm::rotate(shootM4Matrix, glm::radians(-45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    shootM4Matrix = glm::scale(shootM4Matrix, glm::vec3(0.001f));
+    shootM4Matrix = glm::inverse(view) * shootM4Matrix;
+    shader.setMat4("model", shootM4Matrix);
+    shootM4.Draw(shader);
+}
+
+// Dibujar Reticula
+void drawReticle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& reticle2d) {
+    glm::mat4 reticleMatrix = glm::mat4(1.0f);
+    reticleMatrix = glm::translate(reticleMatrix, glm::vec3(0.0f, 0.0f, -0.30f));
+    reticleMatrix = glm::rotate(reticleMatrix, glm::radians(45.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    reticleMatrix = glm::rotate(reticleMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 1.0f));
+    reticleMatrix = glm::scale(reticleMatrix, glm::vec3(0.0015f));
+    reticleMatrix = glm::inverse(view) * reticleMatrix;
+    shader.setMat4("model", reticleMatrix);
+    reticle2d.Draw(shader);
+}
+
+
 // Dibujar Field
 void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& field) {
     glm::mat4 fieldMatrix = glm::mat4(1.0f); // Initialize the transformation matrix to identity
@@ -312,4 +459,29 @@ void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& fi
 
     // Draw the field model using the shader
     field.Draw(shader);
+}
+
+
+// Lampara 1
+void drawLamp1(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp1) {
+    glm::mat4 lamp1Matrix = glm::mat4(1.0f);
+    lamp1Matrix = glm::translate(lamp1Matrix, posLamp1);
+    lamp1Matrix = glm::rotate(lamp1Matrix, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    lamp1Matrix = glm::rotate(lamp1Matrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    lamp1Matrix = glm::rotate(lamp1Matrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    lamp1Matrix = glm::scale(lamp1Matrix, glm::vec3(1.0f));
+    shader.setMat4("model", lamp1Matrix);
+    lamp1.Draw(shader);
+}
+
+// Lampara 2
+void drawLamp2(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp2) {
+    glm::mat4 lamp2Matrix = glm::mat4(1.0f);
+    lamp2Matrix = glm::translate(lamp2Matrix, posLamp2);
+    lamp2Matrix = glm::rotate(lamp2Matrix, glm::radians(-90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    lamp2Matrix = glm::rotate(lamp2Matrix, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    lamp2Matrix = glm::rotate(lamp2Matrix, glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    lamp2Matrix = glm::scale(lamp2Matrix, glm::vec3(1.0f));
+    shader.setMat4("model", lamp2Matrix);
+    lamp2.Draw(shader);
 }
