@@ -35,6 +35,8 @@ void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& fi
 void drawLamp1(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp1);
 void drawLamp2(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& lamp2);
 
+bool intersectsTargetRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const Model& model);
+
 // Settings FHD
 const unsigned int SCR_WIDTH = 1920;
 const unsigned int SCR_HEIGHT = 1080;
@@ -82,7 +84,7 @@ int main()
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-#ifdef APPLE
+#ifdef _APPLE_
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
 
@@ -271,6 +273,51 @@ int main()
         // Lampara 2
         drawLamp2(ourShader, view, projection, lamp);
 
+        // Dibujar el arma seleccionada
+        if (showDeagle) {
+            drawDeagle(ourShader, view, projection, pistola1);
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+            {
+                bool played = PlaySound(TEXT("pistola2.wav"), NULL, SND_ASYNC);
+            }
+        }
+        else if (showM4) {
+            drawM4(ourShader, view, projection, pistolaM4);
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+            {
+                bool played = PlaySound(TEXT("M4.wav"), NULL, SND_ASYNC);
+            }
+        }
+        else if (showBayonet) {
+            drawBayonet(ourShader, view, projection, cuchillo);
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+            {
+                bool played = PlaySound(TEXT("CZ75.wav"), NULL, SND_ASYNC);
+            }
+        }
+
+        // Manejar la lógica del disparo
+        if (isShooting) {
+            shootTime += deltaTime; // Actualiza el tiempo desde que se disparó
+
+            if (shootTime < shootDuration) {
+                // Dibuja el efecto de disparo dependiendo del arma seleccionada
+                if (showDeagle) {
+                    drawShootDeagle(ourShader, view, projection, animacionDisparo);
+                }
+                else if (showM4) {
+                    drawShootM4(ourShader, view, projection, animacionDisparo2);
+                }
+                // El bayonet no tiene efecto de disparo
+            }
+            else {
+                isShooting = false; // Termina el efecto de disparo
+            }
+        }
+
+        ourShader.setMat4("model", targetModelMatrix);
+        blanco.Draw(ourShader);
+
         // render container
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -288,6 +335,74 @@ int main()
     glfwTerminate();
     return 0;
 }
+
+// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+void processInput(GLFWwindow* window) {
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    float currentCameraY = camera.Position.y; // Guardar la posición Y actual de la cámara
+
+    glm::vec3 newPosition = camera.Position;
+
+    // Movimiento y Restriccón de movimiento
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        newPosition += camera.Front * camera.MovementSpeed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        newPosition -= camera.Front * camera.MovementSpeed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        newPosition -= camera.Right * camera.MovementSpeed * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        newPosition += camera.Right * camera.MovementSpeed * deltaTime;
+
+    // Restringe la posición en el eje X
+    if (newPosition.x < -180.0f) newPosition.x = -180.0f;
+    if (newPosition.x > 180.0f) newPosition.x = 180.0f;
+
+    // Restringe la posición en el eje Z
+    if (newPosition.z < -290.0f) newPosition.z = -290.0f;
+    if (newPosition.z > 680.0f) newPosition.z = 680.0f;
+
+    // Aplica la posición ajustada, manteniendo constante la altura (eje Y)
+    camera.Position.x = newPosition.x;
+    camera.Position.z = newPosition.z;
+
+    // Mantener la altura constante
+    camera.Position.y = currentCameraY; // Restablecer la posición Y de la cámara a su valor original
+
+    // Alternar entre las armas
+    if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+        showDeagle = false;
+        showM4 = true;
+        showBayonet = false;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+        showDeagle = true;
+        showM4 = false;
+        showBayonet = false;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+        showDeagle = false;
+        showM4 = false;
+        showBayonet = true;
+    }
+}
+
+
+bool intersectsTargetRayTriangle(const glm::vec3& rayOrigin, const glm::vec3& rayDirection, const Model& model, const glm::mat4& modelMatrix) {
+    for (const Mesh& mesh : model.meshes) {
+        for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+            glm::vec3 v0 = glm::vec3(modelMatrix * glm::vec4(mesh.vertices[mesh.indices[i]].Position, 1.0));
+            glm::vec3 v1 = glm::vec3(modelMatrix * glm::vec4(mesh.vertices[mesh.indices[i + 1]].Position, 1.0));
+            glm::vec3 v2 = glm::vec3(modelMatrix * glm::vec4(mesh.vertices[mesh.indices[i + 2]].Position, 1.0));
+
+            float t = 0.0f;
+        }
+    }
+    return false; // No colisiona
+}
+
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -443,6 +558,14 @@ void drawReticle(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& 
     reticle2d.Draw(shader);
 }
 
+// Dibujar Logo
+void drawLogo(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& logo) {
+    glm::mat4 logoMatrix = glm::mat4(1.0f);
+    logoMatrix = glm::translate(logoMatrix, glm::vec3(20.0f, 50.0f, 20.0f));
+    logoMatrix = glm::scale(logoMatrix, glm::vec3(1000.0f));
+    shader.setMat4("model", logoMatrix);
+    logo.Draw(shader);
+}
 
 // Dibujar Field
 void drawField(Shader& shader, glm::mat4& view, glm::mat4& projection, Model& field) {
