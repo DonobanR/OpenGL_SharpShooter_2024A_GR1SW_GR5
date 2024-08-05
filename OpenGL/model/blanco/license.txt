@@ -1,0 +1,11 @@
+Model Information:
+* title:	Pyro Trinket
+* source:	https://sketchfab.com/3d-models/pyro-trinket-7906bb3ca4a34ed8b3a9405d45731be4
+* author:	Disa_Leong (https://sketchfab.com/Disa_Leong)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Pyro Trinket" (https://sketchfab.com/3d-models/pyro-trinket-7906bb3ca4a34ed8b3a9405d45731be4) by Disa_Leong (https://sketchfab.com/Disa_Leong) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	M4A4 Howl | CSGO
+* source:	https://sketchfab.com/3d-models/m4a4-howl-csgo-7ba8e2eb008d44449913464a38630e8f
+* author:	SirDJCat (https://sketchfab.com/SirDJCat)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "M4A4 Howl | CSGO" (https://sketchfab.com/3d-models/m4a4-howl-csgo-7ba8e2eb008d44449913464a38630e8f) by SirDJCat (https://sketchfab.com/SirDJCat) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Halo 4 Cryo Chamber Diorama
+* source:	https://sketchfab.com/3d-models/halo-4-cryo-chamber-diorama-80ae6fd2e8f24415be5e1680237e73ce
+* author:	Nicolas Gutierrez (https://sketchfab.com/NicolasGutierrez)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Halo 4 Cryo Chamber Diorama" (https://sketchfab.com/3d-models/halo-4-cryo-chamber-diorama-80ae6fd2e8f24415be5e1680237e73ce) by Nicolas Gutierrez (https://sketchfab.com/NicolasGutierrez) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

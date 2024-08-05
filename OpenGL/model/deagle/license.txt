@@ -1,0 +1,11 @@
+Model Information:
+* title:	DEAGLE
+* source:	https://sketchfab.com/3d-models/deagle-ff635600c2ac48ba9557bb06f9f682e9
+* author:	AvnisT (https://sketchfab.com/AvnisT)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "DEAGLE" (https://sketchfab.com/3d-models/deagle-ff635600c2ac48ba9557bb06f9f682e9) by AvnisT (https://sketchfab.com/AvnisT) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

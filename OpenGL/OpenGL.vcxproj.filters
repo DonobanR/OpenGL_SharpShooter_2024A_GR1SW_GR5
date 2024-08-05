@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Archivos de origen">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Archivos de encabezado">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Archivos de recursos">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Archivos de origen\shaders">
+      <UniqueIdentifier>{2d5b8bd2-6def-451e-a08f-73cc1c4a55e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de origen\textures">
+      <UniqueIdentifier>{d09f0fb9-1ab7-43ec-9939-30e2603128ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de origen\model">
+      <UniqueIdentifier>{4bab721c-741b-48eb-9103-e9064c0b9882}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Archivos de origen\NewFilter1">
+      <UniqueIdentifier>{2c461173-eed1-4f27-871c-9849668b6959}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\OpenGL_Stuff\Library\glad.c">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+    <ClCompile Include="E2_Anrrango_Bayas_Bejarano_Villalba.cpp">
+      <Filter>Archivos de origen</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shader_exercise16_mloading.fs">
+      <Filter>Archivos de origen\shaders</Filter>
+    </None>
+    <None Include="shaders\shader_exercise16_mloading.vs">
+      <Filter>Archivos de origen\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="textures\instrucciones2.png">
+      <Filter>Archivos de origen\textures</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
